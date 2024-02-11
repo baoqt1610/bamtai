@@ -232,8 +232,9 @@ void setup()
 
   //het khoi tao relay
   Serial.begin(9600);
-  Serial.println("version 1.1");
-
+  Serial.println("version 1.2");
+ WiFi.begin(ssid, pass);
+   Blynk.config(auth);
   // Init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   printLocalTime();
@@ -250,8 +251,7 @@ void setup()
 //  Serial.println("connected...ok :)");
 //  Blynk.begin(auth, WiFi.SSID().c_str(), WiFi.psk().c_str());
 
-  WiFi.begin(ssid, pass);
-   Blynk.config(auth);
+ 
  
   if (!radio.begin()) 
   {
@@ -452,55 +452,93 @@ for (j = 1;j<=20;j=j+1) {
     int sac = map(DRX, 0, 100, 0, 255);
     ledcWrite(ledChannel, sac);
 
+//     radio.stopListening(); //Ngưng nhận
+    
+//     if (!radio.write(&dl, sizeof(dl)))
+//     {
+//     Serial.println("ko gui duoc ");  
+//     }
+//     else 
+//     {
+
+//     Serial.print("GT gửi: "); Serial.print(dl); Serial.print("   ");
+//        radio.printDetails(); 
+//     }
+//     delay(10);
+      
+// //    radio.startListening(); //Bắt đầu nhận
+// //    while(!radio.available());
+// //    int nutnhan; 
+// //    radio.read(&nutnhan, sizeof(nutnhan));
+// //    Serial.print("Nhận nút nhấn: "); Serial.println(nutnhan);
+// //    delay(10);
+
+// //
+// //      
+//         radio.startListening(); //Bắt đầu nhận
+//         t_bat_dau_cho = millis();
+//         while ((millis()- t_bat_dau_cho)< 10)
+//         {
+//          if(radio.available())
+         
+//          {
+//           radio.read(&ptsac, sizeof(ptsac));
+//           Serial.print("Do rong xung: "); Serial.println(ptsac);
+//           Serial.println("co nhan duoc");
+//           //Blynk.virtualWrite(V1, ptsac);
+          
+
+
+//           nhan = 1;
+//           break;
+//           }
+          
+//           }
+//                     Serial.println("chay qua day");
+
+//           if (nhan ==0)
+//           {Serial.println("Khong nhan duoc");}
+// ////                //het code gui qua bam tai 
+// ////
+   
+    
     radio.stopListening(); //Ngưng nhận
     
-    if (!radio.write(&dl, sizeof(dl)))
-    {
-    Serial.println("ko gui duoc ");  
-    }
-    else 
-    {
-
+    radio.write(&dl, sizeof(dl));
     Serial.print("GT gửi: "); Serial.print(dl); Serial.print("   ");
-       radio.printDetails(); 
-    }
-    delay(10);
-      
-//    radio.startListening(); //Bắt đầu nhận
-//    while(!radio.available());
-//    int nutnhan; 
-//    radio.read(&nutnhan, sizeof(nutnhan));
-//    Serial.print("Nhận nút nhấn: "); Serial.println(nutnhan);
-//    delay(10);
-
-//
-//      
+    
+     
         radio.startListening(); //Bắt đầu nhận
         t_bat_dau_cho = millis();
-        while ((millis()- t_bat_dau_cho)< 10)
+        while ((millis()- t_bat_dau_cho)< 200)
         {
          if(radio.available())
          
          {
           radio.read(&ptsac, sizeof(ptsac));
-          Serial.print("Do rong xung: "); Serial.println(ptsac);
-          Serial.println("co nhan duoc");
+          Serial.print("Do rong xung nhan duoc: "); Serial.println(ptsac);
+          //Serial.println("co nhan duoc");
           //Blynk.virtualWrite(V1, ptsac);
-          
+          radio.flush_rx();
 
 
-          nhan = 1;
+        nhan = 1;
           break;
           }
+          else 
+          {nhan =0;}
+
           
           }
-                    Serial.println("chay qua day");
+                    //Serial.println("chay qua day");
 
           if (nhan ==0)
           {Serial.println("Khong nhan duoc");}
 ////                //het code gui qua bam tai 
 ////
-  
+      radio.stopListening(); //Ngưng nhận
+      delay(10);
+    
 
     sumP1 = 0; 
     sumI1 = 0; 

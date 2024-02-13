@@ -5,9 +5,17 @@ float Vcal= 114;
 float Ical = 100.0;
 float p_cal1 = 0.0;
 float p_cal2 = 0.0; 
-float P_congdonngay_sac = 0; 
-float WH;
-float P_congdonngay_hoaluoi = 0;  
+
+double psac_accu = 0.0;
+double phoa_accu = 0.0;
+double ptai_accu = 0.0;
+double ptai_accu_truoc = 0.0;
+double WH = 0.0;
+
+//float ptai_accu = 0; 
+int ngay_hien_tai = 0;
+
+//float phoa_accu = 0;  
 #define relaysac  27  //chan FAN1
 #define relayhoaluoi  12 //chan FAN2
 
@@ -106,7 +114,11 @@ const char * rootCACertificate = \
 
 int ptsac;
 bool nhan = 0; 
-unsigned long t1,t2,t3,t_bat_dau_cho, t_relay, t_mo_sac, t_do_cong_suat  = 0;
+decltype(millis()) t1,t2,t3,t_bat_dau_cho, t_relay, t_mo_sac = 0;
+decltype(millis()) t_do  = 0;
+decltype(millis()) tg;
+decltype(millis()) tg1;
+
 int quadong_status = 0;
 const int so_mau = 500; 
 int lech_pha = 7; 
@@ -167,10 +179,10 @@ int n = 0;
 int m = 0;
 boolean startnewsample = true;
 
-unsigned long previousMillis, millis_coitruoc = 0;
+decltype(millis()) previousMillis, millis_coitruoc = 0;
 
-unsigned long Vref_SET_TIME;
-unsigned long currentMillis = millis();
+decltype(millis()) Vref_SET_TIME;
+decltype(millis()) currentMillis = millis();
 boolean settleVref = HIGH;
 
 int dl;
@@ -452,56 +464,7 @@ for (j = 1;j<=20;j=j+1) {
     int sac = map(DRX, 0, 100, 0, 255);
     ledcWrite(ledChannel, sac);
 
-//     radio.stopListening(); //Ngưng nhận
-    
-//     if (!radio.write(&dl, sizeof(dl)))
-//     {
-//     Serial.println("ko gui duoc ");  
-//     }
-//     else 
-//     {
 
-//     Serial.print("GT gửi: "); Serial.print(dl); Serial.print("   ");
-//        radio.printDetails(); 
-//     }
-//     delay(10);
-      
-// //    radio.startListening(); //Bắt đầu nhận
-// //    while(!radio.available());
-// //    int nutnhan; 
-// //    radio.read(&nutnhan, sizeof(nutnhan));
-// //    Serial.print("Nhận nút nhấn: "); Serial.println(nutnhan);
-// //    delay(10);
-
-// //
-// //      
-//         radio.startListening(); //Bắt đầu nhận
-//         t_bat_dau_cho = millis();
-//         while ((millis()- t_bat_dau_cho)< 10)
-//         {
-//          if(radio.available())
-         
-//          {
-//           radio.read(&ptsac, sizeof(ptsac));
-//           Serial.print("Do rong xung: "); Serial.println(ptsac);
-//           Serial.println("co nhan duoc");
-//           //Blynk.virtualWrite(V1, ptsac);
-          
-
-
-//           nhan = 1;
-//           break;
-//           }
-          
-//           }
-//                     Serial.println("chay qua day");
-
-//           if (nhan ==0)
-//           {Serial.println("Khong nhan duoc");}
-// ////                //het code gui qua bam tai 
-// ////
-   
-    
     radio.stopListening(); //Ngưng nhận
     
     radio.write(&dl, sizeof(dl));
@@ -510,7 +473,7 @@ for (j = 1;j<=20;j=j+1) {
      
         radio.startListening(); //Bắt đầu nhận
         t_bat_dau_cho = millis();
-        while ((millis()- t_bat_dau_cho)< 200)
+        while ((millis()- t_bat_dau_cho)< 100)
         {
          if(radio.available())
          
@@ -563,7 +526,7 @@ if (j == 20)
   //tinh vua cap nhat blynk
   
    pTai = V_RATIO * I_RATIO * sumP / ((so_mau-lech_pha)* j);
-   pTai = pTai; //dieu chinh them 100w
+   
    iTai = I_RATIO * sqrt(sumI / ((so_mau-lech_pha) * j));
    Vol = V_RATIO * sqrt(sumV / ((so_mau-lech_pha) * j));
    double appPower1 = iTai * Vol;
@@ -596,32 +559,23 @@ if (j == 20)
    
    sumI21 = 0;
    sumP21 = 0;
-//    //tinh P cong don
-// int t_tai = millis() - t_do_cong_suat;
-// WH = (pTai2 * t_tai/1000)/3600; 
-// if (relaysac_status ==bat)
 
-//   {P_congdonngay_sac = P_congdonngay_sac + WH; }
-
-// else if relayhoaluoi_status == bat
-//   {P_congdonngay_hoaluoi = P_congdonngay_hoailuoi + WH; }
-  
-// t_do_cong_suat = mills(); 
-
-
-
-
-
-//    //het code P cong don
-
-
+  tinhWH();
 
     sendPtai();
     sendVol();
     sendptsac();
     sendptsacpin();
     sendap();
-    senddong();
+    
+    sendPsac();
+    sendPsac_congdon();
+    sendPhoa_congdon();
+    sendPtai_cong_don();
+
+    
+
+   // sendPsac_congdon()
 
    
 
@@ -663,7 +617,8 @@ void sendptsac()
 
 void sendptsacpin()
 {
-  double sdata =   DRX;
+ double sdata =   DRX;
+ 
 
   Blynk.virtualWrite(V2, sdata);
 }
@@ -671,24 +626,59 @@ void sendptsacpin()
 void sendap()
 {
   double sdata =   ap;
+  
 
   Blynk.virtualWrite(V6, sdata);
 }
 
-void senddong()
-{
-  double sdata =   pTai2;
+// void senddong()
+// {
+//   double sdata =   pTai2;
 
-  Blynk.virtualWrite(V12, sdata);
+//   Blynk.virtualWrite(V12, sdata);
+// }
+
+void sendPsac()
+{
+  
+  double sdata = pTai2; 
+   Blynk.virtualWrite(V12, sdata);
 }
 
-BLYNK_WRITE(V5)
+void sendPsac_congdon()
 {
-  if (param.asInt()) {  // Assumes if 1 then follow through..
-  Serial.println("Nhan lenh update firmware");
-FirmwareUpdate();
- }
+  
+  double sdata = psac_accu; 
+  Blynk.virtualWrite(V8, sdata);
 }
+
+void sendPhoa_congdon()
+{
+  
+  double sdata = phoa_accu;
+  
+  Blynk.virtualWrite(V10, sdata);
+}
+
+
+
+void sendPtai_cong_don()
+{
+  
+  double sdata = ptai_accu; 
+  
+
+  Blynk.virtualWrite(V5, sdata);
+}
+
+
+// BLYNK_WRITE(V5)
+// {
+//   if (param.asInt()) {  // Assumes if 1 then follow through..
+//   Serial.println("Nhan lenh update firmware");
+// FirmwareUpdate();
+//  }
+// }
 
 
 
@@ -1035,12 +1025,12 @@ void printLocalTime(){
   // Serial.println(&timeinfo, "%d");
   // Serial.print("Year: ");
   // Serial.println(&timeinfo, "%Y");
-  // Serial.print("Hour: ");
-  // Serial.println(&timeinfo, "%H");
+  Serial.print("Hour: ");
+  Serial.println(&timeinfo, "%H");
   // Serial.print("Hour (12 hour format): ");
   // Serial.println(&timeinfo, "%I");
-  // Serial.print("Minute: ");
-  // Serial.println(&timeinfo, "%M");
+  Serial.print("Minute: ");
+  Serial.println(&timeinfo, "%M");
   // Serial.print("Second: ");
   // Serial.println(&timeinfo, "%S");
 
@@ -1222,6 +1212,24 @@ else if (lenh =="pcal2")
     mystring = "LP2 = " + l1;
     Blynk.virtualWrite(V1, mystring);
    }
+
+else if (lenh =="fw")
+  {
+ 
+    
+    mystring = "Update FW";
+    Blynk.virtualWrite(V1, mystring);
+    FirmwareUpdate();
+   }
+else if (lenh =="ml")
+  {
+ 
+    
+    Blynk.virtualWrite(V1, millis());
+    
+   }
+
+
 else 
   {
     mystring = "lenh sai cau truc";
@@ -1248,3 +1256,37 @@ String getValue(String data, char separator, int index)
   return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
+void tinhWH()
+{
+//    //tinh P cong don
+
+tg = millis()- t_do;
+t_do = millis(); 
+
+
+if (relaysac_status ==bat)
+
+  {psac_accu = psac_accu + (pTai2 * tg/3600000.0); }
+
+else if (relayhoaluoi_status == bat)
+  {phoa_accu = phoa_accu + (pTai2 * tg/3600000.0); }
+
+
+
+
+
+ptai_accu = ptai_accu + pTai * tg / 3600000.0;
+
+
+if (ngay != ngay_hien_tai) 
+{
+//reset het P
+psac_accu = 0.0;
+phoa_accu = 0.0;
+ptai_accu = 0.0;
+} 
+ngay_hien_tai = ngay;
+
+
+//    //het code P cong don
+}

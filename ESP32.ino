@@ -280,11 +280,11 @@ void setup()
   //Nhưng đường 0 mặc định dùng cho ghi
   //Lệnh openReadingPipe có thể mở đường truyền từ 1-5
   //Đọc data của địa chỉ 12345 trên đường truyền 1
-     
+  radio.setAutoAck(false);
   radio.setPALevel(RF24_PA_MAX); //Cài bộ khuyết địa công suất ở mức MIN
   radio.setChannel(80);
   radio.setDataRate(RF24_250KBPS);   
-     radio.printDetails(); 
+  radio.printDetails(); 
  
   if (!radio.available())
   {
@@ -1278,14 +1278,13 @@ else if (relayhoaluoi_status == bat)
 ptai_accu = ptai_accu + pTai * tg / 3600000.0;
 
 
-if (ngay != ngay_hien_tai) 
+if ((gio==6) && (phut ==0)) 
 {
 //reset het P
 psac_accu = 0.0;
 phoa_accu = 0.0;
 ptai_accu = 0.0;
 } 
-ngay_hien_tai = ngay;
 
 
 //    //het code P cong don

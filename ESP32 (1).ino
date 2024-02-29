@@ -1,7 +1,7 @@
 //khai bao on 
-float R1 = 96.4; 
+float R1 = 97.4; 
 float R2 = 19.68;
-float Vcal= 114;
+float Vcal= 108;
 float Ical = 100.0;
 float p_cal1 = 0.0;
 float p_cal2 = 0.0; 
@@ -114,11 +114,11 @@ const char * rootCACertificate = \
 
 int ptsac;
 bool nhan = 0; 
-unsigned long t1,t2,t3,t_bat_dau_cho, t_relay, t_mo_sac = 0;
+unsigned long t1,t2,t3,t_bat_dau_cho, t_relay, t_mo_sac, t_reset = 0;
 
 //decltype(millis()) t1,t2,t3,t_bat_dau_cho, t_relay, t_mo_sac = 0;
 decltype(millis()) t_do  = 0;
-decltype(millis()) t_reset  = 0;
+//decltype(millis()) t_reset  = 0;
 decltype(millis()) tg;
 decltype(millis()) tg1;
 
@@ -196,15 +196,15 @@ int saconm= 0;
 int sacoffh = 16;
 int sacoffm = 0;
 
-int hoaonh= 17; 
+int hoaonh= 16; 
 int hoaonm= 0;
 int hoaoffh = 7;
 int hoaoffm = 0;
 
-float minV = 11.0;
-float maxV = 14.5;
+float minV = 12.0;
+float maxV = 14.0;
 float maxI = 50.0; 
-float maxP = 600.0; 
+float maxP = 1400.0; 
 
 //
 
@@ -247,7 +247,7 @@ void setup()
 
   //het khoi tao relay
   Serial.begin(9600);
-  Serial.println("version 1.3");
+  Serial.println("version 1.4");
  WiFi.begin(ssid, pass);
    Blynk.config(auth);
   // Init and get the time
@@ -431,15 +431,15 @@ for (j = 1;j<=20;j=j+1) {
                double pf = pReal/ appPower;
     
 
-               Serial.print("P thuc: ");
-               Serial.println(pReal);
+              //  Serial.print("P thuc: ");
+              //  Serial.println(pReal);
                
-               Serial.print("Dong: ");
-               Serial.println(iTai1);
-               Serial.print("Vol: ");
-               Serial.println(Vol1);
-               Serial.print("Power factor: ");
-               Serial.println(pf);
+              //  Serial.print("Dong: ");
+              //  Serial.println(iTai1);
+              //  Serial.print("Vol: ");
+              //  Serial.println(Vol1);
+              //  Serial.print("Power factor: ");
+              //  Serial.println(pf);
             
     
                   //code dieu khien den moi
@@ -471,10 +471,12 @@ for (j = 1;j<=20;j=j+1) {
     radio.stopListening(); //Ngưng nhận
     
     if (radio.write(&dl, sizeof(dl)))
-    {Serial.print("GT gửi: "); Serial.print(dl); Serial.print("   ");}
+    {//Serial.print("GT gửi: "); Serial.print(dl); Serial.print("   ");
+    }
     else 
 
-    {Serial.print("ko gui duoc");}
+    {//Serial.print("ko gui duoc");
+    }
     
      
         radio.startListening(); //Bắt đầu nhận
@@ -485,7 +487,7 @@ for (j = 1;j<=20;j=j+1) {
          
          {
           radio.read(&ptsac, sizeof(ptsac));
-          Serial.print("Do rong xung nhan duoc: "); Serial.println(ptsac);
+          //Serial.print("Do rong xung nhan duoc: "); Serial.println(ptsac);
           //Serial.println("co nhan duoc");
           //Blynk.virtualWrite(V1, ptsac);
           radio.flush_rx();
@@ -503,7 +505,8 @@ for (j = 1;j<=20;j=j+1) {
                     //Serial.println("chay qua day");
 
           if (nhan ==0)
-          {Serial.println("Khong nhan duoc");}
+          {//Serial.println("Khong nhan duoc");
+          }
 ////                //het code gui qua bam tai 
 ////
       radio.stopListening(); //Ngưng nhận
@@ -745,7 +748,7 @@ void FirmwareUpdate()
 
  void tangsac()
 {
-  DRX = DRX + 5; 
+  DRX = DRX + 1; 
   Serial.println("tang sac");
 
   if (DRX >= maxsac)
@@ -755,7 +758,7 @@ void FirmwareUpdate()
 void giamsac()
 {
 
-  DRX = DRX - 5; 
+  DRX = DRX - 1; 
   Serial.println("giam sac");
   
   //chinh ve max sac
@@ -898,8 +901,8 @@ else
 
       if (relaysac_status)
       {
-       tat_sac(); 
-       Blynk.virtualWrite(V1, "Tat sac do qua dong");
+       giamsac(); 
+       //Blynk.virtualWrite(V1, "Tat sac do qua dong");
       }
  
       
@@ -1032,12 +1035,12 @@ void printLocalTime(){
   // Serial.println(&timeinfo, "%d");
   // Serial.print("Year: ");
   // Serial.println(&timeinfo, "%Y");
-  Serial.print("Hour: ");
-  Serial.println(&timeinfo, "%H");
+  //Serial.print("Hour: ");
+  //Serial.println(&timeinfo, "%H");
   // Serial.print("Hour (12 hour format): ");
   // Serial.println(&timeinfo, "%I");
-  Serial.print("Minute: ");
-  Serial.println(&timeinfo, "%M");
+  //Serial.print("Minute: ");
+  //Serial.println(&timeinfo, "%M");
   // Serial.print("Second: ");
   // Serial.println(&timeinfo, "%S");
 
@@ -1220,6 +1223,16 @@ else if (lenh =="pcal2")
     Blynk.virtualWrite(V1, mystring);
    }
 
+else if (lenh =="maxP")
+  {
+    String l1 = getValue(pinValue, ',', 1);
+    maxP = l1.toFloat();
+   
+    mystring = "MaxP = " + l1;
+    Blynk.virtualWrite(V1, mystring);
+   }
+
+
 else if (lenh =="fw")
   {
  
@@ -1299,15 +1312,20 @@ ptai_accu = 0.0;
 
 void khoidonglaiRF24() 
 {
-  if ((millis() - t_reset) > 1*60*1000L)
+  //const unsigned int interval = 60000;
+  
+  int kt = millis() - t_reset;
+  if ( kt > 3600000)
   {  radio.powerDown();
     //Serial.println(" 1 Tx1 problem end");
     radio_init();
     radio.powerUp();
-    mystring = "Da reset RF24";
-    Blynk.virtualWrite(V1, mystring);
+    // Serial.println("Da reset RF24");
+    // Blynk.virtualWrite(V1, "RF24");
+    t_reset = millis(); 
+
   }
-  t_reset = millis(); 
+  
 }
 
 

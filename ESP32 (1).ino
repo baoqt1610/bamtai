@@ -1302,10 +1302,13 @@ if ((gio==6) && (phut ==0))
 {
 //reset het P
 psac_accu = 0.0;
+} 
+if ((gio==8) && (phut ==0)) 
+{
+//reset het P
 phoa_accu = 0.0;
 ptai_accu = 0.0;
-} 
-
+}
 
 //    //het code P cong don
 }
